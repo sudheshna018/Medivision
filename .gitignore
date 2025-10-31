@@ -1,0 +1,27 @@
+# Ignore large training data and archives
+medvision training/vit/archive/
+*.jpg
+*.jpeg
+*.png
+
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+
+# Ignore IDE and system files
+.vscode/
+.DS_Store
+
+# Ignore model and log files
+*.h5
+*.keras
+*.pth
+*.pt
+*.log
+
+
