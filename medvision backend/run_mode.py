@@ -10,6 +10,7 @@ from PIL import Image
 # from patchify import patchify  # Replaced with custom implementation
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
+from huggingface_hub import hf_hub_download
 from transformer import TumorClassifierViT
 
 # ------------------ CONFIG ------------------
@@ -18,11 +19,12 @@ cf = {
     "num_channels": 3,
     "patch_size": 16,
 }
-cf["num_patches"] = (cf["image_size"]*2) // (cf["patch_size"]*2)
+cf["num_patches"] = (cf["image_size"] // cf["patch_size"]) ** 2
 cf["flat_patches_shape"] = (
     cf["num_patches"],
     cf["patch_size"] * cf["patch_size"] * cf["num_channels"]
 )
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 smooth = 1e-15
@@ -53,9 +55,13 @@ def dice_loss(y_true, y_pred):
     return 1.0 - dice_coef(y_true, y_pred)
 
 # ------------------ INITIALIZE MODELS ------------------
-UNET_MODEL_PATH = "best_model(1).keras"
-VIT_MODEL_PATH = "best_model.pth"
+UNET_MODEL_PATH = hf_hub_download(repo_id="Sudheshna18/Medivision_Models", filename="unet_best.keras")
+VIT_MODEL_PATH = hf_hub_download(repo_id="Sudheshna18/Medivision_Models", filename="vit_best.pth")
+
 CLASS_FOLDER = "archive\\Training"
+print(f"✅ UNet model path: {UNET_MODEL_PATH}")
+print(f"✅ ViT model path: {VIT_MODEL_PATH}")
+
 
 unet_model = tf.keras.models.load_model(
     UNET_MODEL_PATH, custom_objects={"dice_loss": dice_loss, "dice_coef": dice_coef}
@@ -111,6 +117,8 @@ def predict_class(image_pil):
 # ------------------ FLASK API ------------------
 app = Flask(__name__)
 CORS(app)
+# CORS(app, resources={r"/*": {"origins": "*"}})
+
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -156,5 +164,5 @@ def predict():
 def get_mask():
     return send_file("output_mask.png", mimetype='image/png')
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     app.run(debug=True, port=5003)
